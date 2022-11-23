@@ -1,0 +1,11 @@
+[package]
+name = "Folder mirror"
+version = "1.0.0"
+authors = ["Lupascu Gabriel Cristian <lupascugabrielcristian@gmail.com>"]
+edition = "2022"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+xml-rs = "0.8"
+
