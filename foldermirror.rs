@@ -1,11 +1,13 @@
-extern crate xml;
+extern crate quick_xml;
 
-use std::fs;
+use std::{fs,str};
 use std::path::Path;
 use std::env;
 use std::any::type_name;
 use std::fs::File;
-use xml::writer::EventWriter;
+use quick_xml::events::{Event, BytesStart};
+use quick_xml::writer::Writer;
+use std::io::{Cursor, BufWriter};
 
 fn main() {
     // TODO
@@ -21,10 +23,26 @@ fn main() {
     }
 
     // Make output XML file
-    let mut output_file = File::create("output.xml").unwrap();
+    let mut _output_file = File::create("output.xml").unwrap();
 
-    // Make the XML writer
-    let mut writer = EventWriter::new();
+    // Creez xml writer
+    let mut writer = Writer::new(Cursor::new(Vec::new()));
+    // creez un element de tip <my_elem>
+    let mut elem = BytesStart::new("my_elem");
+    // la elem adaug o proprietate si devine <my_elem my-key="some value" >
+    elem.push_attribute(("my-key", "some value"));
+    // pun in buffer
+    writer.write_event(Event::Start(elem));
+    // extrag textul din bufferul writer-ului
+    let result = writer.into_inner().into_inner();
+    // Vec<utf8> in str
+    let str_result = str::from_utf8(&result);
+    println!("{:?}", str_result.unwrap()); // Am text aici
+
+
+    // Write some xml code
+    let output_path = Path::new("output.xml");
+    fs::write(&output_path, result).unwrap();
 
     let p = Path::new(main_dir);
     print_dir_contents(p);
@@ -38,7 +56,7 @@ fn print_type<T>(_: &T) {
 fn print_dir_contents(path: &Path) {
 
     if path.is_dir() {
-        println!("[DIRECTORY] {}", path.display());
+        //println!("[DIRECTORY] {}", path.display());
 
         // read_dir returns Result<ReadDir>
         // paths is a ReadDir. ReadDir is Iterator over the entries in a directory
@@ -66,6 +84,6 @@ fn print_dir_contents(path: &Path) {
         let file_name = &path.file_name().unwrap()
                 .to_str().unwrap();
 
-        println!("[FILE] {}", file_name);
+        //println!("[FILE] {}", file_name);
     }
 }

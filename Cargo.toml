@@ -1,11 +1,15 @@
 [package]
-name = "Folder mirror"
+name = "foldermirror"
 version = "1.0.0"
 authors = ["Lupascu Gabriel Cristian <lupascugabrielcristian@gmail.com>"]
-edition = "2022"
+edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[[bin]]
+name = "foldermirror"
+path = "foldermirror.rs"
 
 [dependencies]
-xml-rs = "0.8"
+quick-xml = "0.26.0"
+
+
 
