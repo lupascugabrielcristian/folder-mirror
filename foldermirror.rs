@@ -4,10 +4,9 @@ use std::{fs,str};
 use std::path::Path;
 use std::env;
 use std::any::type_name;
-use std::fs::File;
-use quick_xml::events::{Event, BytesStart};
+use quick_xml::events::{Event, BytesStart, BytesEnd, BytesText};
 use quick_xml::writer::Writer;
-use std::io::{Cursor, BufWriter};
+use std::io::{Cursor};
 
 fn main() {
     // TODO
@@ -22,30 +21,45 @@ fn main() {
         return;
     }
 
-    // Make output XML file
-    let mut _output_file = File::create("output.xml").unwrap();
-
     // Creez xml writer
     let mut writer = Writer::new(Cursor::new(Vec::new()));
-    // creez un element de tip <my_elem>
-    let mut elem = BytesStart::new("my_elem");
-    // la elem adaug o proprietate si devine <my_elem my-key="some value" >
-    elem.push_attribute(("my-key", "some value"));
-    // pun in buffer
-    writer.write_event(Event::Start(elem));
+
+//  Model de scris cod xml
+//    // creez un element de tip <my_elem> si ii pun in buffer inceputul
+//    let mut elem = BytesStart::new("my_elem");
+//    // la elem adaug o proprietate si devine <my_elem my-key="some value" >
+//    elem.push_attribute(("my-key", "some value"));
+//    writer.write_event(Event::Start(elem));
+//
+//    // Scriu continutul unui element
+//    let content = BytesText::new("content");
+//    writer.write_event(Event::Text(content));
+//
+//    // pun in buffer sfarsitul unui element
+//    let end_elem = BytesEnd::new("my_elem");
+//    writer.write_event(Event::End(end_elem));
+//
+//    // extrag textul din bufferul writer-ului
+//    let result = writer.into_inner().into_inner();
+//    // Vec<utf8> in str
+//    let str_result = str::from_utf8(&result);
+//    println!("{:?}", str_result.unwrap()); // Am text aici
+
+
+    // Creates single element
+    //writer.create_element("my_elem").write_empty();
+
+    let p = Path::new(main_dir);
+    print_dir_contents(p, &mut writer);
+
+
     // extrag textul din bufferul writer-ului
     let result = writer.into_inner().into_inner();
     // Vec<utf8> in str
     let str_result = str::from_utf8(&result);
-    println!("{:?}", str_result.unwrap()); // Am text aici
-
-
-    // Write some xml code
     let output_path = Path::new("output.xml");
-    fs::write(&output_path, result).unwrap();
+    fs::write(&output_path, str_result.unwrap());
 
-    let p = Path::new(main_dir);
-    print_dir_contents(p);
 }
 
 // Prints the type of a variable
@@ -53,9 +67,10 @@ fn print_type<T>(_: &T) {
     println!("{}", type_name::<T>());
 }
 
-fn print_dir_contents(path: &Path) {
+fn print_dir_contents(path: &Path, writer: &mut Writer<Cursor<Vec<u8>>>) {
 
     if path.is_dir() {
+        writer.create_element("directory").write_empty();
         //println!("[DIRECTORY] {}", path.display());
 
         // read_dir returns Result<ReadDir>
@@ -78,12 +93,13 @@ fn print_dir_contents(path: &Path) {
                 continue
             }
 
-            print_dir_contents( &p.as_path() );
+            print_dir_contents( &p.as_path(), writer );
         }
     } else {
         let file_name = &path.file_name().unwrap()
                 .to_str().unwrap();
 
         //println!("[FILE] {}", file_name);
+        writer.create_element("file").write_empty();
     }
 }
