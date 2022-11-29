@@ -58,20 +58,38 @@ fn main() {
     // Vec<utf8> in str
     let str_result = str::from_utf8(&result);
     let output_path = Path::new("output.xml");
-    fs::write(&output_path, str_result.unwrap());
+    let write_result = fs::write(&output_path, str_result.unwrap());
+    match write_result {
+        Ok(()) => println!("output.xml written"),
+        Err(_) => println!("Not able to write output file"),
+    }
 
 }
 
 // Prints the type of a variable
-fn print_type<T>(_: &T) {
+fn _print_type<T>(_: &T) {
     println!("{}", type_name::<T>());
 }
 
 fn print_dir_contents(path: &Path, writer: &mut Writer<Cursor<Vec<u8>>>) {
 
     if path.is_dir() {
-        writer.create_element("directory").write_empty();
-        //println!("[DIRECTORY] {}", path.display());
+        // dir_name este str
+        let dir_name = path.file_name().unwrap()
+                .to_str().unwrap();
+        // Scriu un element gol cu numele directorului
+        //match writer.create_element(dir_name).write_empty() {
+        //    Ok(_) => (),
+        //    Err(_) => return,
+        //};
+
+        // creez un element de tip <my_elem> si ii pun in buffer inceputul
+        let elem = BytesStart::new(dir_name);
+        // la elem adaug o proprietate si devine <my_elem my-key="some value" >
+        match writer.write_event(Event::Start(elem)) {
+            Ok(_) => (),
+            Err(_) => return,
+        }
 
         // read_dir returns Result<ReadDir>
         // paths is a ReadDir. ReadDir is Iterator over the entries in a directory
@@ -95,11 +113,24 @@ fn print_dir_contents(path: &Path, writer: &mut Writer<Cursor<Vec<u8>>>) {
 
             print_dir_contents( &p.as_path(), writer );
         }
+
+        // pun in buffer sfarsitul unui element
+        let end_dir_elem = BytesEnd::new(dir_name);
+        match writer.write_event(Event::End(end_dir_elem)) {
+            Ok(_) => (),
+            Err(_) => return,
+        }
+
     } else {
         let file_name = &path.file_name().unwrap()
                 .to_str().unwrap();
 
-        //println!("[FILE] {}", file_name);
-        writer.create_element("file").write_empty();
+        match writer.create_element(file_name).write_empty() {
+            Ok(_) => (),
+            Err(_) => {
+                println!("Unable to write element");
+                return;
+            }
+        };
     }
 }
