@@ -6,6 +6,7 @@ use std::env;
 use std::any::type_name;
 use quick_xml::events::{Event, BytesStart, BytesEnd};
 use quick_xml::writer::Writer;
+use quick_xml::reader::Reader;
 
 
 fn main() {
@@ -19,6 +20,17 @@ fn main() {
         return;
     }
 
+    if &args[1] == "import" {
+        if args.len() >= 2 {
+            println!("Importing {}", &args[2]);
+            import_file(&args[2]);
+        }
+        else {
+            println!("Need file name to import");
+        }
+        return;
+    }
+
     let main_dir = &args[1];
 
     // Verific daca exista directorul
@@ -26,31 +38,6 @@ fn main() {
         println!("Cannot find specified path");
         return;
     }
-
-//  Model de scris cod xml
-//    // creez un element de tip <my_elem> si ii pun in buffer inceputul
-//    let mut elem = BytesStart::new("my_elem");
-//    // la elem adaug o proprietate si devine <my_elem my-key="some value" >
-//    elem.push_attribute(("my-key", "some value"));
-//    writer.write_event(Event::Start(elem));
-//
-//    // Scriu continutul unui element
-//    let content = BytesText::new("content");
-//    writer.write_event(Event::Text(content));
-//
-//    // pun in buffer sfarsitul unui element
-//    let end_elem = BytesEnd::new("my_elem");
-//    writer.write_event(Event::End(end_elem));
-//
-//    // extrag textul din bufferul writer-ului
-//    let result = writer.into_inner().into_inner();
-//    // Vec<utf8> in str
-//    let str_result = str::from_utf8(&result);
-//    println!("{:?}", str_result.unwrap()); // Am text aici
-
-
-    // Creates single element
-    //writer.create_element("my_elem").write_empty();
 
     let mut file_count = 0;
     let mut dir_count = 0;
@@ -75,11 +62,10 @@ fn main() {
         Ok(()) => println!("output.xml written"),
         Err(_) => println!("Not able to write output file"),
     }
-
 }
 
 // Prints the type of a variable
-fn _print_type<T>(_: &T) {
+fn print_type<T>(_: &T) {
     println!("{}", type_name::<T>());
 }
 
@@ -146,4 +132,33 @@ fn print_dir_contents(path: &Path, writer: &mut Writer<&mut Vec<u8>>, file_count
             }
         };
     }
+}
+
+fn import_file(import_file: &String) {
+    // Check if exists
+    if !Path::new(import_file).exists() {
+        println!("Cannot find specified path");
+        return;
+    }
+
+    // Obtain Path object to file
+    let import_path = Path::new(import_file);
+
+    // Read import file. Content este de tip String
+    let content = fs::read_to_string(import_path).unwrap();
+
+    // Get xml Reader
+    let mut reader = Reader::from_str(&content);
+    reader.trim_text(true);
+
+    let mut buf = Vec::new();
+    loop {
+        match reader.read_event_into(&mut buf) {
+            Ok(Event::Start(_)) => println!("Start"),
+            Err(e) => println!("Error at position),
+            _ => ()
+        }
+        buf.clear();
+    }
+    print_type(&reader);
 }
