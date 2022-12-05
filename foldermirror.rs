@@ -65,7 +65,7 @@ fn main() {
 }
 
 // Prints the type of a variable
-fn print_type<T>(_: &T) {
+fn _print_type<T>(_: &T) {
     println!("{}", type_name::<T>());
 }
 
@@ -78,9 +78,13 @@ fn print_dir_contents(path: &Path, writer: &mut Writer<&mut Vec<u8>>, file_count
         let dir_name = path.file_name().unwrap()
                 .to_str().unwrap();
 
+        // Remove spaces
+        let dir_name_ns = str::replace(dir_name, " ", "");
+
         // creez un element de tip <my_elem> si ii pun in buffer inceputul
-        let mut elem = BytesStart::new(dir_name);
+        let mut elem = BytesStart::new(&dir_name_ns);
         elem.push_attribute(("type", "directory"));
+        elem.push_attribute(("orig-name", dir_name));
         match writer.write_event(Event::Start(elem)) {
             Ok(_) => (),
             Err(_) => return,
@@ -112,7 +116,7 @@ fn print_dir_contents(path: &Path, writer: &mut Writer<&mut Vec<u8>>, file_count
         }
 
         // pun in buffer sfarsitul unui element
-        let end_dir_elem = BytesEnd::new(dir_name);
+        let end_dir_elem = BytesEnd::new(&dir_name_ns);
         match writer.write_event(Event::End(end_dir_elem)) {
             Ok(_) => (),
             Err(_) => return,
@@ -141,6 +145,12 @@ fn import_file(import_file: &String) {
         return;
     }
 
+    // Din asta fac path-ul fiecarui director 
+    // Ref https://doc.rust-lang.org/std/path/struct.Path.html
+    // TODO sa fac cu push si pop de la PathBuf
+    // Ref https://doc.rust-lang.org/std/path/struct.PathBuf.html#method.push
+    let mut current_path = "";
+
     // Obtain Path object to file
     let import_path = Path::new(import_file);
 
@@ -152,13 +162,25 @@ fn import_file(import_file: &String) {
     reader.trim_text(true);
 
     let mut buf = Vec::new();
+    // Go to entire Xml text and get all Start events
     loop {
         match reader.read_event_into(&mut buf) {
-            Ok(Event::Start(_)) => println!("Start"),
-            Err(e) => println!("Error at position),
+            Ok(Event::Start(e)) => {
+                // Read the name of each Start tag. e.name() returns QName
+                match str::from_utf8(e.name().as_ref()) {
+                    Ok(elem_name) => {
+                        current_path = elem_name;
+                        println!("{}", elem_name);
+                    },
+                    Err(_) => ()
+                }
+            },
+            Ok(Event::Eof) => break,
+            Err(e) => println!("Error at position {}: {:?}", reader.buffer_position(), e),
             _ => ()
         }
         buf.clear();
     }
-    print_type(&reader);
 }
+
+
