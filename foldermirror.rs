@@ -1,7 +1,7 @@
 extern crate quick_xml;
 
 use std::{fs,str};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::env;
 use std::any::type_name;
 use quick_xml::events::{Event, BytesStart, BytesEnd};
@@ -10,9 +10,6 @@ use quick_xml::reader::Reader;
 
 
 fn main() {
-    // TODO
-    // Sa verific daca am un argument
-
     let args: Vec<String> = env::args().collect();
 
     if args.len() == 1 {
@@ -145,17 +142,21 @@ fn import_file(import_file: &String) {
         return;
     }
 
-    // Din asta fac path-ul fiecarui director 
+
+
+    // Make an empty PathBuf care va tine structura curenta
     // Ref https://doc.rust-lang.org/std/path/struct.Path.html
-    // TODO sa fac cu push si pop de la PathBuf
     // Ref https://doc.rust-lang.org/std/path/struct.PathBuf.html#method.push
-    let mut current_path = "";
+    let mut current_path = PathBuf::new();
+    // Will replicate the imported folder structure inside root folder /tmp
+    current_path.push("/tmp");
 
     // Obtain Path object to file
     let import_path = Path::new(import_file);
 
     // Read import file. Content este de tip String
     let content = fs::read_to_string(import_path).unwrap();
+
 
     // Get xml Reader
     let mut reader = Reader::from_str(&content);
@@ -166,11 +167,44 @@ fn import_file(import_file: &String) {
     loop {
         match reader.read_event_into(&mut buf) {
             Ok(Event::Start(e)) => {
-                // Read the name of each Start tag. e.name() returns QName
+                // Enter a directory
+                match str::from_utf8(e.name().as_ref()) {
+                    // Read the name of each Start tag. e.name() returns QName
+                    Ok(elem_name) => {
+                        current_path.push(elem_name);
+                        match fs::create_dir(current_path.as_path().to_str().unwrap()) {
+                            Ok(()) => (),
+                            Err(_) => {
+                                println!("Unable to create directory {}", elem_name);
+                                return;
+                            }
+                        }
+                    },
+                    Err(_) => ()
+                }
+            },
+            Ok(Event::End(e)) => {
+                // Exit from a directory
+                match str::from_utf8(e.name().as_ref()) {
+                    Ok(_) => {
+                        current_path.pop();
+                    },
+                    Err(_) => ()
+                }
+            },
+            Ok(Event::Empty(e)) => {
+                // Found file
                 match str::from_utf8(e.name().as_ref()) {
                     Ok(elem_name) => {
-                        current_path = elem_name;
-                        println!("{}", elem_name);
+                        current_path.push(elem_name);
+                        match fs::write(current_path.as_path().to_str().unwrap(), "content") {
+                            Ok(()) => (),
+                            Err(_) => {
+                                println!("Unable to crate file {}. Exiting current position", elem_name);
+                                return;
+                            }
+                        }
+                        current_path.pop();
                     },
                     Err(_) => ()
                 }

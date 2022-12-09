@@ -1,0 +1,13 @@
+<test_folder_structure type="directory" orig-name="test_folder_structure">
+    <A type="directory" orig-name="A">
+        <Acfile.txt/>
+        <Aa type="directory" orig-name="Aa">
+            <B-file.txt/>
+            <AAa-file.txt/>
+        </Aa>
+        <Ab type="directory" orig-name="Ab">
+        </Ab>
+    </A>
+    <B type="directory" orig-name="B">
+    </B>
+</test_folder_structure>
