@@ -1,6 +1,12 @@
 FROM debian:buster
 
-COPY ./target/debug/foldermirror /usr/bin
-COPY output.xml /tmp/
-#ENTRYPOINT ["./foldermirror import output.xml"]
+RUN mkdir foldermirror
+COPY ./target/release/foldermirror /foldermirror
+COPY output.xml /foldermirror
+COPY broot /usr/bin
+
+
+WORKDIR /foldermirror
+RUN ./foldermirror import output.xml 2> /tmp/foldermirror.log
 CMD /bin/bash
+

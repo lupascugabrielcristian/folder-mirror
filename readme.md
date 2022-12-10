@@ -5,6 +5,7 @@ $rustup update$
 
 Compile
 $rustc folder-mirror.rs$
+$cargo build --release$
 
 Run
 $./folder-mirror test_folder_structure/$
