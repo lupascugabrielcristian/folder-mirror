@@ -4,10 +4,9 @@ use std::{fs,str};
 use std::path::{Path, PathBuf};
 use std::env;
 use std::any::type_name;
-use quick_xml::events::{Event, BytesStart, BytesEnd, BytesText};
+use quick_xml::events::{Event, BytesStart, BytesEnd};
 use quick_xml::writer::Writer;
 use quick_xml::reader::Reader;
-use std::time::{ SystemTime, UNIX_EPOCH };
 use std::string::String;
 
 fn main() {
@@ -43,21 +42,6 @@ fn main() {
     // Creez xml writer
     let mut buffer = Vec::<u8>::new();
     let mut writer_indent = Writer::new_with_indent(&mut buffer, b' ', 4);
-
-
-    // Scriu primul element cu data in seconds from epoch. sys_time este u64
-    let sys_time = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_secs();
-    let s_time: String = sys_time.to_string();
-    match writer_indent.create_element("date").write_text_content(BytesText::new(&s_time)) {
-        Ok(_) => (),
-        Err(_) => {
-            println!("Unable to write element");
-            return;
-        }
-    };
 
     let p = Path::new(main_dir);
     print_dir_contents(p, &mut writer_indent, &mut file_count, &mut dir_count );
@@ -186,13 +170,6 @@ fn import_file(import_file: &String) {
                 match str::from_utf8(e.name().as_ref()) {
                     // Read the name of each Start tag. e.name() returns QName
                     Ok(elem_name) => {
-                        // TODO Daca fac verificarea asta, current_path devine /test_folder_structure
-                        // Daca nu fac verificarea este /tmp/test_folder_structure
-                        //if elem_name == "date" {
-                        //    println!("found date element");
-                        //    continue;
-                        //}
-
                         current_path.push(elem_name);
                         println!("{:?}", current_path.as_path().to_str().unwrap());
                         match fs::create_dir(current_path.as_path().to_str().unwrap()) {
