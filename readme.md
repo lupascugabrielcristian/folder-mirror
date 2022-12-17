@@ -7,7 +7,7 @@ Compile
 $cargo build --release$
 
 Run
-$./folder-mirror test_folder_structure/$
+$./folder-mirror ~/projects/$
 
 Build Docker image
 $docker build -t folder-sync .$
@@ -17,8 +17,10 @@ $docker run -it folder-sync$
 
 Proces
 1. Generate output.xml file that contains the target folder structure
-$./folder-mirror test_folder_structure/$
+$./folder-mirror ~/projects/$
 2. Run docker container to regenerate same folder structure inside the container at /tmp/ location
 $docker run -it folder-sync$
+3. Copy output.xml to ~/projects/
+$cp output.xml ~/projects/utility_scripts/day-end/folder-mirror.xml$
 
 
